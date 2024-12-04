@@ -3,7 +3,6 @@ on:
     types: [published]
 
 env:
-  REGISTRY_IMAGE: rancher/hardened-calico
   GITHUB_ACTION_TAG: ${{ github.ref_name }}  
 
 jobs:

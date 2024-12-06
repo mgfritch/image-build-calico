@@ -37,6 +37,7 @@ REPO ?= rancher
 REGISTRY_IMAGE = $(REPO)/hardened-calico
 IMAGE = $(REGISTRY_IMAGE):$(TAG)
 
+METADATA_FILE = metadata-$(subst /,-,$(REGISTRY_IMAGE)).json
 LABEL_ARGS = $(foreach label,$(META_LABELS),--label $(label))
 
 ifeq (,$(filter %$(BUILD_META),$(TAG)))
@@ -72,7 +73,7 @@ push-image: buildx-machine
 		--output type=image,name=$(REGISTRY_IMAGE),push-by-digest=true,name-canonical=true,push=true \
 		$(LABEL_ARGS) \
 		--push \
-		--metadata-file /tmp/metadata.json \
+		--metadata-file $(METADATA_FILE) \
 		.
 
 .PHONY: manifest-push
@@ -92,6 +93,7 @@ log:
 	@echo "TAG=$(TAG:$(BUILD_META)=)"
 	@echo "REPO=$(REPO)"
 	@echo "REGISTRY_IMAGE=$(REGISTRY_IMAGE)"
+	@echo "METADATA_FILE=$(METADATA_FILE)"
 	@echo "PKG=$(PKG)"
 	@echo "SRC=$(SRC)"
 	@echo "BUILD_META=$(BUILD_META)"

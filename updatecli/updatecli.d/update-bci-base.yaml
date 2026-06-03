@@ -39,9 +39,9 @@ scms:
       username: '{{ requiredEnv .github.username }}'
       user: '{{ .github.user }}'
       email: '{{ .github.email }}'
-      owner: '{{ .scm.default.owner }}'
-      repository: '{{ .scm.default.repository }}'
-      branch: '{{ .scm.default.branch }}'
+      owner: '{{ requiredEnv "GITHUB_REPOSITORY_OWNER" }}'
+      repository: '{{ requiredEnv "UPDATECLI_GITHUB_REPO" }}'
+      branch: '{{ requiredEnv "UPDATECLI_GITHUB_BRANCH" }}'
 actions:
   default:
     title: 'Bump BCI base image version'

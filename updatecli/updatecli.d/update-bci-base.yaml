@@ -10,16 +10,24 @@ sources:
       versionfilter:
         kind: regex
         pattern: '^\d+\.\d+$'
+  digest:
+    name: Get latest BCI base image digest
+    kind: dockerdigest
+    dependson:
+      - tag
+    spec:
+      image: '{{ .image.bci.name }}'
+      tag: '{{ source "tag" }}'
 
 conditions:
   image:
     name: Check BCI base image exists
     kind: dockerimage
-    sourceid: tag
+    sourceid: digest
     spec:
       image: '{{ .image.bci.name }}'
       architecture: amd64
-      tag: '{{ source "tag" }}'
+      tag: '{{ source "digest" }}'
 
 targets:
   updatecli:
@@ -30,6 +38,18 @@ targets:
     spec:
       file: 'updatecli/values.yaml'
       key: '$.image.bci.tag'
+  dockerfile:
+    name: 'Update BCI base image digest'
+    kind: dockerfile
+    scmid: default
+    sourceid: digest
+    transformers:
+      - addprefix: '{{ .image.bci.name }}:'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'BCI_IMAGE'
 
 scms:
   default:

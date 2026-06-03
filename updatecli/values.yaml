@@ -15,3 +15,7 @@ scm:
   buildbase:
     owner: rancher
     repository: image-build-base
+image:
+  bci:
+    name: registry.suse.com/bci/bci-base
+    tag: 15.7

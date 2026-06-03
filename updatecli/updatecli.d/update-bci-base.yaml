@@ -60,5 +60,5 @@ actions:
         - status/auto-created
       merge:
         strategy: client
-        after: 5m
-      mergemethod: rebase
+        after: 0s
+      mergemethod: squash

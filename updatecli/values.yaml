@@ -5,7 +5,7 @@ github:
   token: "UPDATECLI_GITHUB_TOKEN"
 scm:
   default:
-    owner: rancher
+    owner: mgfritch
     repository: image-build-calico
     branch: master
   upstream:

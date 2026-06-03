@@ -18,4 +18,4 @@ scm:
 image:
   bci:
     name: registry.suse.com/bci/bci-base
-    tag: 15.7
+    tag: "16.1"

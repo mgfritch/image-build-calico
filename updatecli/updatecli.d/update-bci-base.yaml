@@ -23,6 +23,7 @@ targets:
   dockerfile:
     name: "Update BCI base image tag"
     kind: dockerfile
+    scmid: default
     sourceid: bci
     transformers:
       - addprefix: "registry.suse.com/bci/bci-base:"

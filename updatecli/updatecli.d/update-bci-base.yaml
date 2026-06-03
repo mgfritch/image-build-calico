@@ -58,5 +58,6 @@ actions:
         - skip-changelog
         - status/auto-created
       merge:
-        strategy: auto
+        strategy: client
+      mergemethod: rebase
     scmid: default

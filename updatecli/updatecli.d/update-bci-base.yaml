@@ -1,5 +1,69 @@
 ---
-name: 'Update BCI base version'
+name: 'Update BCI base image version tag'
+
+sources:
+  tag:
+    name: Get latest BCI base image version tag
+    kind: dockerimage
+    spec:
+      image: 'registry.suse.com/bci/bci-base'
+      versionfilter:
+        kind: regex
+        pattern: '^\d+\.\d+$'
+
+conditions:
+  image:
+    name: Check BCI base image exists
+    kind: dockerimage
+    sourceid: tag
+    spec:
+      image: registry.suse.com/bci/bci-base
+      architecture: amd64
+      tag: '{{ source "tag" }}'
+
+targets:
+  updatecli:
+    name: 'Update BCI base image tag'
+    kind: yaml
+    scmid: default
+    sourceid: tag
+    spec:
+      file: 'updatecli/updatecli.d/update-bci-base.yaml'
+      key: '$.sources.digest.spec.tag'
+
+scms:
+  default:
+    kind: github
+    spec:
+      token: '{{ requiredEnv .github.token }}'
+      username: '{{ requiredEnv .github.username }}'
+      user: '{{ .github.user }}'
+      email: '{{ .github.email }}'
+      owner: '{{ requiredEnv "GITHUB_REPOSITORY_OWNER" }}'
+      repository: '{{ requiredEnv "UPDATECLI_GITHUB_REPO" }}'
+      branch: '{{ requiredEnv "UPDATECLI_GITHUB_BRANCH" }}'
+
+actions:
+  default:
+    title: 'Update BCI base image tag'
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      description:
+        <h3>Update BCI base image tag</h3>
+        <ul>
+          <li>{{ source "tag" }}</li>
+        </ul>
+      labels:
+        - chore
+        - skip-changelog
+        - status/auto-created
+      merge:
+        strategy: manual
+      mergemethod: squash
+
+---
+name: 'Update BCI base image digest'
 
 sources:
   digest:
@@ -7,7 +71,7 @@ sources:
     kind: dockerdigest
     spec:
       image: 'registry.suse.com/bci/bci-base'
-      tag: 'latest'
+      tag: '15.7'
 
 conditions:
   image:

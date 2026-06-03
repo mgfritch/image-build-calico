@@ -59,4 +59,6 @@ actions:
         - skip-changelog
         - status/auto-created
       merge:
-        strategy: auto
+        strategy: client
+        after: 5m
+      mergemethod: rebase

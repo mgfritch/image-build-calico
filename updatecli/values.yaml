@@ -13,9 +13,9 @@ image:
       tag: "16.0"
 scm:
   default:
-    owner: rancher
+    owner: mgfritch
     repository: image-build-calico
-    branch: master
+    branch: master 
   upstream:
     owner: projectcalico
     repository: calico

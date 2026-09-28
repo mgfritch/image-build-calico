@@ -1,0 +1,335 @@
+---
+name: 'Update BCI build base image digest'
+
+sources:
+  current_digest:
+    name: Get current BCI build base image digest from Dockerfile
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: BCI_BUILD_IMAGE
+
+  digest:
+    name: Get latest BCI build base image digest for configured stream
+    kind: dockerdigest
+    spec:
+      image: '{{ .image.bci.build.name }}'
+      tag: '{{ .image.bci.build.tag }}'
+
+conditions:
+  image:
+    name: Check BCI build base image exists
+    kind: dockerimage
+    sourceid: digest
+    spec:
+      image: '{{ .image.bci.build.name }}'
+      architecture: amd64
+      tag: '{{ source "digest" }}'
+  cve_gate:
+    name: Update only if current digest has CVEs and candidate has fewer CVEs
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: './updatecli/scripts/should-update-bci-digest.sh "{{ source "current_digest" }}" "{{ .image.bci.build.name }}:{{ source "digest" }}" "{{ .image.bci.build.tag }}"'
+
+targets:
+  dockerfile:
+    name: 'Update BCI build base image digest'
+    kind: dockerfile
+    scmid: default
+    sourceid: digest
+    transformers:
+      - addprefix: '{{ .image.bci.build.name }}:'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'BCI_BUILD_IMAGE'
+
+scms:
+  default:
+    kind: github
+    spec:
+      token: '{{ requiredEnv .github.token }}'
+      username: '{{ requiredEnv .github.username }}'
+      user: '{{ .github.user }}'
+      email: '{{ .github.email }}'
+      owner: '{{ requiredEnv "GITHUB_REPOSITORY_OWNER" }}'
+      repository: '{{ requiredEnv "UPDATECLI_GITHUB_REPO" }}'
+      branch: '{{ requiredEnv "UPDATECLI_GITHUB_BRANCH" }}'
+
+actions:
+  default:
+    title: 'Update BCI build base image digest'
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      description:
+        <h3>Update BCI build base image digest</h3>
+        <ul>
+          <li>{{ .image.bci.build.name }}:{{ .image.bci.build.tag }}</li>
+          <li>{{ source "digest" }}</li>
+        </ul>
+      labels:
+        - chore
+        - skip-changelog
+        - status/auto-created
+      merge:
+        # TODO: use strategy `auto` when automerge and rulesets are applied
+        strategy: client
+        after: 0s
+      mergemethod: squash
+
+---
+name: 'Update BCI build base image tag'
+
+sources:
+  tag:
+    name: Get latest BCI build base image tag
+    kind: dockerimage
+    spec:
+      image: '{{ .image.bci.build.name }}'
+      versionfilter:
+        kind: regex
+        pattern: '^\d+\.\d+$'
+  digest:
+    name: Get latest BCI build base image digest
+    kind: dockerdigest
+    dependson:
+      - tag
+    spec:
+      image: '{{ .image.bci.build.name }}'
+      tag: '{{ source "tag" }}'
+
+conditions:
+  image:
+    name: Check BCI build base image exists
+    kind: dockerimage
+    sourceid: digest
+    spec:
+      image: '{{ .image.bci.build.name }}'
+      architecture: amd64
+      tag: '{{ source "digest" }}'
+
+targets:
+  dockerfile:
+    name: 'Update BCI build base image digest'
+    kind: dockerfile
+    scmid: default
+    sourceid: digest
+    transformers:
+      - addprefix: '{{ .image.bci.build.name }}:'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'BCI_BUILD_IMAGE'
+  updatecli:
+    name: 'Update BCI build base image tag'
+    kind: yaml
+    scmid: default
+    sourceid: tag
+    spec:
+      file: 'updatecli/values.yaml'
+      key: '$.image.bci.build.tag'
+
+scms:
+  default:
+    kind: github
+    spec:
+      token: '{{ requiredEnv .github.token }}'
+      username: '{{ requiredEnv .github.username }}'
+      user: '{{ .github.user }}'
+      email: '{{ .github.email }}'
+      owner: '{{ requiredEnv "GITHUB_REPOSITORY_OWNER" }}'
+      repository: '{{ requiredEnv "UPDATECLI_GITHUB_REPO" }}'
+      branch: '{{ requiredEnv "UPDATECLI_GITHUB_BRANCH" }}'
+
+actions:
+  default:
+    title: 'Update BCI build base image tag'
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      description:
+        <h3>Update BCI build base image tag</h3>
+        <ul>
+          <li>{{ .image.bci.build.name }}:{{ source "tag" }}</li>
+        </ul>
+      labels:
+        - chore
+        - skip-changelog
+        - status/auto-created
+      merge:
+        strategy: manual
+      mergemethod: squash
+
+---
+name: 'Update BCI runtime base image digest'
+
+sources:
+  current_digest:
+    name: Get current BCI runtime base image digest from Dockerfile
+    kind: dockerfile
+    spec:
+      file: Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: BCI_RUNTIME_IMAGE
+
+  digest:
+    name: Get latest BCI runtime base image digest for configured stream
+    kind: dockerdigest
+    spec:
+      image: '{{ .image.bci.runtime.name }}'
+      tag: '{{ .image.bci.runtime.tag }}'
+
+conditions:
+  image:
+    name: Check BCI runtime base image exists
+    kind: dockerimage
+    sourceid: digest
+    spec:
+      image: '{{ .image.bci.runtime.name }}'
+      architecture: amd64
+      tag: '{{ source "digest" }}'
+  cve_gate:
+    name: Update only if current digest has CVEs and candidate has fewer CVEs
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: './updatecli/scripts/should-update-bci-digest.sh "{{ source "current_digest" }}" "{{ .image.bci.runtime.name }}:{{ source "digest" }}" "{{ .image.bci.runtime.tag }}"'
+
+targets:
+  dockerfile:
+    name: 'Update BCI runtime base image digest'
+    kind: dockerfile
+    scmid: default
+    sourceid: digest
+    transformers:
+      - addprefix: '{{ .image.bci.runtime.name }}:'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'BCI_RUNTIME_IMAGE'
+
+scms:
+  default:
+    kind: github
+    spec:
+      token: '{{ requiredEnv .github.token }}'
+      username: '{{ requiredEnv .github.username }}'
+      user: '{{ .github.user }}'
+      email: '{{ .github.email }}'
+      owner: '{{ requiredEnv "GITHUB_REPOSITORY_OWNER" }}'
+      repository: '{{ requiredEnv "UPDATECLI_GITHUB_REPO" }}'
+      branch: '{{ requiredEnv "UPDATECLI_GITHUB_BRANCH" }}'
+
+actions:
+  default:
+    title: 'Update BCI runtime base image digest'
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      description:
+        <h3>Update BCI runtime base image digest</h3>
+        <ul>
+          <li>{{ .image.bci.runtime.name }}:{{ .image.bci.runtime.tag }}</li>
+          <li>{{ source "digest" }}</li>
+        </ul>
+      labels:
+        - chore
+        - skip-changelog
+        - status/auto-created
+      merge:
+        # TODO: use strategy `auto` when automerge and rulesets are applied
+        strategy: client
+        after: 0s
+      mergemethod: squash
+
+---
+name: 'Update BCI runtime base image tag'
+
+sources:
+  tag:
+    name: Get latest BCI runtime base image tag
+    kind: dockerimage
+    spec:
+      image: '{{ .image.bci.runtime.name }}'
+      versionfilter:
+        kind: regex
+        pattern: '^\d+\.\d+$'
+  digest:
+    name: Get latest BCI runtime base image digest
+    kind: dockerdigest
+    dependson:
+      - tag
+    spec:
+      image: '{{ .image.bci.runtime.name }}'
+      tag: '{{ source "tag" }}'
+
+conditions:
+  image:
+    name: Check BCI runtime base image exists
+    kind: dockerimage
+    sourceid: digest
+    spec:
+      image: '{{ .image.bci.runtime.name }}'
+      architecture: amd64
+      tag: '{{ source "digest" }}'
+
+targets:
+  dockerfile:
+    name: 'Update BCI runtime base image digest'
+    kind: dockerfile
+    scmid: default
+    sourceid: digest
+    transformers:
+      - addprefix: '{{ .image.bci.runtime.name }}:'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'ARG'
+        matcher: 'BCI_RUNTIME_IMAGE'
+  updatecli:
+    name: 'Update BCI runtime base image tag'
+    kind: yaml
+    scmid: default
+    sourceid: tag
+    spec:
+      file: 'updatecli/values.yaml'
+      key: '$.image.bci.runtime.tag'
+
+scms:
+  default:
+    kind: github
+    spec:
+      token: '{{ requiredEnv .github.token }}'
+      username: '{{ requiredEnv .github.username }}'
+      user: '{{ .github.user }}'
+      email: '{{ .github.email }}'
+      owner: '{{ requiredEnv "GITHUB_REPOSITORY_OWNER" }}'
+      repository: '{{ requiredEnv "UPDATECLI_GITHUB_REPO" }}'
+      branch: '{{ requiredEnv "UPDATECLI_GITHUB_BRANCH" }}'
+
+actions:
+  default:
+    title: 'Update BCI runtime base image tag'
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      description:
+        <h3>Update BCI runtime base image tag</h3>
+        <ul>
+          <li>{{ .image.bci.runtime.name }}:{{ source "tag" }}</li>
+        </ul>
+      labels:
+        - chore
+        - skip-changelog
+        - status/auto-created
+      merge:
+        strategy: manual
+      mergemethod: squash

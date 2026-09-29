@@ -84,31 +84,29 @@ actions:
 name: 'Update BCI base image tag'
 
 # Pipeline 2 - new minor stream advance (manual review).
-# Detects a new minor stream tag (e.g. 16.0 -> 16.1) for both images. bci-base
-# (build-only) is moved to the new FLOATING stream tag with no digest, while
-# the bci-minimal (runtime) image is pinned to the new stream's digest. Both
-# values.yaml stream tags are bumped so Pipeline 1 subsequently tracks runtime
-# digests on the new stream. No CVE gate: it must open regardless of any CVE
-# delta.
+# Advances both images to the highest GA (generally available) minor stream
+# (e.g. 16.0 -> 16.1) once it leaves beta. The target stream is resolved by
+# updatecli/scripts/latest-ga-stream.sh, which skips beta/tech-preview streams
+# (com.suse.supportlevel=techpreview / com.suse.eula=sle-beta); the registry
+# `latest` tag cannot be used because it points at the previous GA major
+# (15.7). bci-base (build-only) is moved to the new FLOATING stream tag with no
+# digest, while the bci-minimal (runtime) image is pinned to the new stream's
+# digest. Both values.yaml stream tags are bumped so Pipeline 1 subsequently
+# tracks runtime digests on the new stream. No CVE gate: it must open
+# regardless of any CVE delta.
 
 sources:
   build_tag:
-    name: Get latest BCI build base image stream tag
-    kind: dockerimage
+    name: Get latest GA (non-beta) BCI build base image stream tag
+    kind: shell
     spec:
-      image: '{{ .image.bci.build.name }}'
-      versionfilter:
-        kind: regex
-        pattern: '^\d+\.\d+$'
+      command: './updatecli/scripts/latest-ga-stream.sh {{ .image.bci.build.name }}'
 
   runtime_tag:
-    name: Get latest BCI runtime base image stream tag
-    kind: dockerimage
+    name: Get latest GA (non-beta) BCI runtime base image stream tag
+    kind: shell
     spec:
-      image: '{{ .image.bci.runtime.name }}'
-      versionfilter:
-        kind: regex
-        pattern: '^\d+\.\d+$'
+      command: './updatecli/scripts/latest-ga-stream.sh {{ .image.bci.runtime.name }}'
   runtime_digest:
     name: Get latest BCI runtime base image digest for stream tag
     kind: dockerdigest
@@ -117,6 +115,18 @@ sources:
     spec:
       image: '{{ .image.bci.runtime.name }}'
       tag: '{{ source "runtime_tag" }}'
+
+conditions:
+  new_ga_stream:
+    name: Only advance when the GA stream differs from the configured stream
+    kind: shell
+    disablesourceinput: true
+    spec:
+      # Proceed only when the resolved GA stream tag is not already the
+      # configured stream (values.yaml image.bci.build.tag). This keeps the
+      # pipeline a no-op - and opens no PR - while the next minor is still
+      # beta (e.g. it stays on 16.0 and does not propose the 16.1 beta).
+      command: 'test "{{ source "build_tag" }}" != "{{ .image.bci.build.tag }}"'
 
 targets:
   build_dockerfile:
